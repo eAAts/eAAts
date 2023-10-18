@@ -151,9 +151,25 @@ contract eAAts is Ownable {
     }
 
     // View Functions
-    function checkDeliveryStatus(
-        uint256 _orderId
-    ) external view returns (DeliveryStatus) {
-        return orders[_orderId].status;
+    function getOrdersByStatus(
+        DeliveryStatus _status
+    ) external view returns (uint256[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 1; i <= orderCount; i++) {
+            if (orders[i].status == _status) {
+                count++;
+            }
+        }
+
+        uint256[] memory orderIds = new uint256[](count);
+        uint256 index = 0;
+        for (uint256 j = 1; j <= orderCount; j++) {
+            if (orders[j].status == _status) {
+                orderIds[index] = j;
+                index++;
+            }
+        }
+
+        return orderIds;
     }
 }
