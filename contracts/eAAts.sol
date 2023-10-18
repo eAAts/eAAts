@@ -28,6 +28,14 @@ contract eAAts is Ownable {
         DeliveryStatus status;
     }
 
+    struct OrderData {
+        address[] participants;
+        uint256 totalAmount;
+        uint256 minParticipants;
+        FeeType feeType;
+        DeliveryStatus status;
+    }
+
     // Events
     event OrderCreated(
         uint256 indexed orderId,
@@ -153,7 +161,8 @@ contract eAAts is Ownable {
     // View Functions
     function getOrdersByStatus(
         DeliveryStatus _status
-    ) external view returns (uint256[] memory) {
+    ) external view returns (OrderData[] memory) {
+        // Counting the orders with the given status
         uint256 count = 0;
         for (uint256 i = 1; i <= orderCount; i++) {
             if (orders[i].status == _status) {
@@ -161,15 +170,22 @@ contract eAAts is Ownable {
             }
         }
 
-        uint256[] memory orderIds = new uint256[](count);
+        // Collecting the orders
+        OrderData[] memory matchedOrders = new OrderData[](count);
         uint256 index = 0;
         for (uint256 j = 1; j <= orderCount; j++) {
             if (orders[j].status == _status) {
-                orderIds[index] = j;
+                matchedOrders[index] = OrderData(
+                    orders[j].participants,
+                    orders[j].totalAmount,
+                    orders[j].minParticipants,
+                    orders[j].feeType,
+                    orders[j].status
+                );
                 index++;
             }
         }
 
-        return orderIds;
+        return matchedOrders;
     }
 }
