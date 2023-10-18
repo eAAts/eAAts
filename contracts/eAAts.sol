@@ -2,55 +2,11 @@
 pragma solidity ^0.8.9;
 
 import "./interfaces/IAAController.sol";
+import "./interfaces/IeAAts.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract eAAts is Ownable {
-    // Enumerations
-    enum DeliveryStatus {
-        BeforeDelivery,
-        DuringDelivery,
-        AfterDelivery
-    }
-
-    enum FeeType {
-        Equal,
-        Proportional
-    }
-
-    // Structs
-    struct Order {
-        address[] participants;
-        mapping(address => uint256) userAmounts;
-        uint256 totalAmount;
-        uint256 minParticipants;
-        FeeType feeType;
-        DeliveryStatus status;
-    }
-
-    struct OrderData {
-        address[] participants;
-        uint256 totalAmount;
-        uint256 minParticipants;
-        FeeType feeType;
-        DeliveryStatus status;
-    }
-
-    // Events
-    event OrderCreated(
-        uint256 indexed orderId,
-        address indexed creator,
-        uint256 minParticipants,
-        FeeType feeType
-    );
-    event OrderJoined(
-        uint256 indexed orderId,
-        address indexed participant,
-        uint256 amount
-    );
-    event OrderDeliveryStarted(uint256 indexed orderId);
-    event DeliveryCompleted(uint256 indexed orderId);
-
+contract eAAts is IeAAts, Ownable {
     // State Variables
     mapping(uint256 => Order) public orders;
     IAAController public aaController;
