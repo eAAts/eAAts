@@ -26,6 +26,13 @@ contract eAAts is IeAAts, Ownable {
     }
 
     // External Functions
+
+    /**
+     * @notice Creates a new order
+     * @param _minParticipants Minimum number of participants required for the order
+     * @param _feeType Fee type of the order
+     * @return The ID of the created order
+     */
     function createOrder(
         uint256 _minParticipants,
         FeeType _feeType
@@ -53,6 +60,11 @@ contract eAAts is IeAAts, Ownable {
         return orderCount;
     }
 
+    /**
+     * @notice Allows a user to join an order
+     * @param _orderId ID of the order to join
+     * @param _amount Amount to contribute to the order
+     */
     function joinOrder(uint256 _orderId, uint256 _amount) external {
         require(
             aaController.getAccountAbstraction(msg.sender) != address(0),
@@ -81,6 +93,10 @@ contract eAAts is IeAAts, Ownable {
         }
     }
 
+    /**
+     * @notice Marks an order as completed (delivery done)
+     * @param _orderId ID of the order to complete
+     */
     function completeDelivery(uint256 _orderId) external onlyOwner {
         Order storage order = orders[_orderId];
         require(
@@ -115,6 +131,12 @@ contract eAAts is IeAAts, Ownable {
     }
 
     // View Functions
+
+    /**
+     * @notice Fetches orders based on their delivery status
+     * @param _status Desired delivery status
+     * @return An array of orders matching the provided status
+     */
     function getOrdersByStatus(
         DeliveryStatus _status
     ) external view returns (OrderData[] memory) {
