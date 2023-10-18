@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-contract TestAA {
+import "../interfaces/ITestAA.sol";
+
+contract TestAA is ITestAA {
     receive() external payable {}
 
     function run(
