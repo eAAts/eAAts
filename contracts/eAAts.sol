@@ -28,6 +28,21 @@ contract eAAts is Ownable {
         DeliveryStatus status;
     }
 
+    // Events
+    event OrderCreated(
+        uint256 indexed orderId,
+        address indexed creator,
+        uint256 minParticipants,
+        FeeType feeType
+    );
+    event OrderJoined(
+        uint256 indexed orderId,
+        address indexed participant,
+        uint256 amount
+    );
+    event OrderDeliveryStarted(uint256 indexed orderId);
+    event DeliveryCompleted(uint256 indexed orderId);
+
     // State Variables
     mapping(uint256 => Order) public orders;
     IAAController public aaController;
@@ -69,6 +84,8 @@ contract eAAts is Ownable {
         newOrder.feeType = _feeType;
         newOrder.status = DeliveryStatus.BeforeDelivery;
 
+        emit OrderCreated(orderCount, msg.sender, _minParticipants, _feeType);
+
         return orderCount;
     }
 
@@ -83,8 +100,9 @@ contract eAAts is Ownable {
         order.userAmounts[msg.sender] = _amount;
         order.totalAmount += _amount;
 
+        emit OrderJoined(_orderId, msg.sender, _amount);
+
         if (order.participants.length == order.minParticipants) {
-            order.status = DeliveryStatus.DuringDelivery;
             for (uint256 i = 0; i < order.participants.length; i++) {
                 address userAddress = order.participants[i];
                 IERC20(tokenAddress).transferFrom(
@@ -93,6 +111,9 @@ contract eAAts is Ownable {
                     order.userAmounts[userAddress]
                 );
             }
+            order.status = DeliveryStatus.DuringDelivery;
+
+            emit OrderDeliveryStarted(_orderId);
         }
     }
 
@@ -123,7 +144,10 @@ contract eAAts is Ownable {
                 );
             }
         }
+
         order.status = DeliveryStatus.AfterDelivery;
+
+        emit DeliveryCompleted(_orderId);
     }
 
     // View Functions
