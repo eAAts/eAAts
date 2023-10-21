@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract eAAts is IeAAts, AutomationCompatible, Ownable {
     // State Variables
     IFunctionsConsumer public consumer;
+    uint64 public subscriptionId;
+    string public source;
     mapping(uint256 => Order) public orders;
     uint256 public orderCount = 0;
     address public tokenAddress;
@@ -33,10 +35,14 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
     // Constructor
     constructor(
         IFunctionsConsumer _consumer,
+        uint64 _subscriptionId,
+        string memory _source,
         address _tokenAddress,
         uint256 _deliveryFee
     ) {
         consumer = _consumer;
+        subscriptionId = _subscriptionId;
+        source = _source;
 
         tokenAddress = _tokenAddress;
         deliveryFee = _deliveryFee;
@@ -91,25 +97,16 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
         require(_amount > 0, "Amount must be greater than zero");
 
         Order storage order = orders[_orderId];
+        order.participants.push(msg.sender);
+        order.userAmounts[msg.sender] = _amount;
+        order.totalAmount += _amount;
 
         if (_networkId == block.chainid) {
-            order.participants.push(msg.sender);
-            order.userAmounts[msg.sender] = _amount;
-            order.totalAmount += _amount;
-
-            emit OrderJoined(_orderId, msg.sender, _amount);
-
             IERC20(tokenAddress).transferFrom(
                 msg.sender,
                 address(this),
                 _amount
             );
-
-            if (order.participants.length == order.minParticipants) {
-                order.status = DeliveryStatus.DuringDelivery;
-
-                emit OrderDeliveryStarted(_orderId);
-            }
         } else {
             pendingPayments.push(
                 PendingPayment({
@@ -120,6 +117,14 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
             );
 
             emit OrderPendingPayment(_orderId, msg.sender, _amount, _networkId);
+        }
+
+        emit OrderJoined(_orderId, msg.sender, _amount);
+
+        if (order.participants.length == order.minParticipants) {
+            order.status = DeliveryStatus.DuringDelivery;
+
+            emit OrderDeliveryStarted(_orderId);
         }
     }
 
@@ -136,9 +141,10 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
 
         for (uint256 i = 0; i < order.participants.length; i++) {
             if (order.feeType == FeeType.Equal) {
+                address userAddress = order.participants[i];
                 uint256 amount = deliveryFee / order.minParticipants;
                 IERC20(tokenAddress).transferFrom(
-                    msg.sender,
+                    userAddress,
                     address(this),
                     amount
                 );
@@ -147,7 +153,7 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
                 uint256 amount = (deliveryFee *
                     order.userAmounts[userAddress]) / order.totalAmount;
                 IERC20(tokenAddress).transferFrom(
-                    msg.sender,
+                    userAddress,
                     address(this),
                     amount
                 );
@@ -197,7 +203,7 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
     }
 
     function checkUpkeep(
-        bytes calldata checkData
+        bytes calldata
     )
         external
         view
@@ -215,5 +221,62 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
         }
     }
 
-    function performUpkeep(bytes calldata performData) external override {}
+    function performUpkeep(bytes calldata performData) external override {
+        (address user, address token, uint256 amount) = abi.decode(
+            performData,
+            (address, address, uint256)
+        );
+
+        string[] memory args = new string[](3);
+        args[0] = addressToString(user);
+        args[1] = addressToString(token);
+        args[2] = uint256ToString(amount);
+
+        bytes[] memory bytesArgs = new bytes[](3);
+
+        consumer.sendRequest(
+            source,
+            new bytes(0),
+            0,
+            0,
+            args,
+            bytesArgs,
+            subscriptionId,
+            300000
+        );
+    }
+
+    function addressToString(
+        address _addr
+    ) public pure returns (string memory) {
+        bytes32 value = bytes32(uint256(uint160(_addr)));
+        bytes memory alphabet = "0123456789abcdef";
+        bytes memory str = new bytes(42);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint256 i = 0; i < 20; i++) {
+            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    function uint256ToString(uint256 _i) public pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint256 k = length - 1;
+        while (_i != 0) {
+            bstr[k--] = bytes1(uint8(48 + (_i % 10)));
+            _i /= 10;
+        }
+        return string(bstr);
+    }
 }
