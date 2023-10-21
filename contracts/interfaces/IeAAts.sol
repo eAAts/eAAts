@@ -66,8 +66,13 @@ interface IeAAts {
      * @notice Allows a user to join an order
      * @param _orderId ID of the order to join
      * @param _amount Amount to contribute to the order
+     * @param _networkId Network ID to check
      */
-    function joinOrder(uint256 _orderId, uint256 _amount) external;
+    function joinOrder(
+        uint256 _orderId,
+        uint256 _amount,
+        uint256 _networkId
+    ) external;
 
     /**
      * @notice Marks an order as completed (delivery done)

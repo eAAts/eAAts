@@ -1,26 +1,34 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "./interfaces/IAAController.sol";
 import "./interfaces/IeAAts.sol";
+import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract eAAts is IeAAts, Ownable {
+contract eAAts is IeAAts, AutomationCompatible, Ownable {
     // State Variables
     mapping(uint256 => Order) public orders;
-    IAAController public aaController;
     uint256 public orderCount = 0;
     address public tokenAddress;
     uint256 public deliveryFee;
 
+    event OrderPendingPayment(
+        uint256 indexed orderId,
+        address indexed user,
+        uint256 amount,
+        uint256 networkId
+    );
+
+    struct PendingPayment {
+        address user;
+        uint256 amount;
+    }
+
+    mapping(uint256 => PendingPayment[]) public pendingPayments;
+
     // Constructor
-    constructor(
-        IAAController _aaController,
-        address _tokenAddress,
-        uint256 _deliveryFee
-    ) {
-        aaController = _aaController;
+    constructor(address _tokenAddress, uint256 _deliveryFee) {
         tokenAddress = _tokenAddress;
         deliveryFee = _deliveryFee;
     }
@@ -64,29 +72,37 @@ contract eAAts is IeAAts, Ownable {
      * @notice Allows a user to join an order
      * @param _orderId ID of the order to join
      * @param _amount Amount to contribute to the order
+     * @param _networkId Network ID to check
      */
-    function joinOrder(uint256 _orderId, uint256 _amount) external {
-        require(
-            aaController.getAccountAbstraction(msg.sender) != address(0),
-            "Invalid account abstraction"
-        );
+    function joinOrder(
+        uint256 _orderId,
+        uint256 _amount,
+        uint256 _networkId
+    ) external {
+        require(_amount > 0, "Amount must be greater than zero");
 
         Order storage order = orders[_orderId];
-        order.participants.push(msg.sender);
-        order.userAmounts[msg.sender] = _amount;
-        order.totalAmount += _amount;
 
-        emit OrderJoined(_orderId, msg.sender, _amount);
+        if (_networkId == block.chainid) {
+            order.participants.push(msg.sender);
+            order.userAmounts[msg.sender] = _amount;
+            order.totalAmount += _amount;
 
+            emit OrderJoined(_orderId, msg.sender, _amount);
+
+            IERC20(tokenAddress).transferFrom(
+                msg.sender,
+                address(this),
+                _amount
+            );
+        } else {
+            pendingPayments[_orderId].push(
+                PendingPayment({user: msg.sender, amount: _amount})
+            );
+
+            emit OrderPendingPayment(_orderId, msg.sender, _amount, _networkId);
+        }
         if (order.participants.length == order.minParticipants) {
-            for (uint256 i = 0; i < order.participants.length; i++) {
-                address userAddress = order.participants[i];
-                IERC20(tokenAddress).transferFrom(
-                    aaController.getAccountAbstraction(userAddress),
-                    address(this),
-                    order.userAmounts[userAddress]
-                );
-            }
             order.status = DeliveryStatus.DuringDelivery;
 
             emit OrderDeliveryStarted(_orderId);
@@ -106,10 +122,9 @@ contract eAAts is IeAAts, Ownable {
 
         for (uint256 i = 0; i < order.participants.length; i++) {
             if (order.feeType == FeeType.Equal) {
-                address userAddress = order.participants[i];
                 uint256 amount = deliveryFee / order.minParticipants;
                 IERC20(tokenAddress).transferFrom(
-                    aaController.getAccountAbstraction(userAddress),
+                    msg.sender,
                     address(this),
                     amount
                 );
@@ -118,7 +133,7 @@ contract eAAts is IeAAts, Ownable {
                 uint256 amount = (deliveryFee *
                     order.userAmounts[userAddress]) / order.totalAmount;
                 IERC20(tokenAddress).transferFrom(
-                    aaController.getAccountAbstraction(userAddress),
+                    msg.sender,
                     address(this),
                     amount
                 );
@@ -166,4 +181,15 @@ contract eAAts is IeAAts, Ownable {
 
         return matchedOrders;
     }
+
+    function checkUpkeep(
+        bytes calldata checkData
+    )
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {}
+
+    function performUpkeep(bytes calldata performData) external override {}
 }
