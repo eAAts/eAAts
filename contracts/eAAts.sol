@@ -2,12 +2,14 @@
 pragma solidity ^0.8.9;
 
 import "./interfaces/IeAAts.sol";
+import "./interfaces/IFunctionsConsumer.sol";
 import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract eAAts is IeAAts, AutomationCompatible, Ownable {
     // State Variables
+    IFunctionsConsumer public consumer;
     mapping(uint256 => Order) public orders;
     uint256 public orderCount = 0;
     address public tokenAddress;
@@ -21,14 +23,21 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
     );
 
     struct PendingPayment {
+        uint256 orderId;
         address user;
         uint256 amount;
     }
 
-    mapping(uint256 => PendingPayment[]) public pendingPayments;
+    PendingPayment[] public pendingPayments;
 
     // Constructor
-    constructor(address _tokenAddress, uint256 _deliveryFee) {
+    constructor(
+        IFunctionsConsumer _consumer,
+        address _tokenAddress,
+        uint256 _deliveryFee
+    ) {
+        consumer = _consumer;
+
         tokenAddress = _tokenAddress;
         deliveryFee = _deliveryFee;
     }
@@ -95,17 +104,22 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
                 address(this),
                 _amount
             );
+
+            if (order.participants.length == order.minParticipants) {
+                order.status = DeliveryStatus.DuringDelivery;
+
+                emit OrderDeliveryStarted(_orderId);
+            }
         } else {
-            pendingPayments[_orderId].push(
-                PendingPayment({user: msg.sender, amount: _amount})
+            pendingPayments.push(
+                PendingPayment({
+                    orderId: _orderId,
+                    user: msg.sender,
+                    amount: _amount
+                })
             );
 
             emit OrderPendingPayment(_orderId, msg.sender, _amount, _networkId);
-        }
-        if (order.participants.length == order.minParticipants) {
-            order.status = DeliveryStatus.DuringDelivery;
-
-            emit OrderDeliveryStarted(_orderId);
         }
     }
 
@@ -189,7 +203,17 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
         view
         override
         returns (bool upkeepNeeded, bytes memory performData)
-    {}
+    {
+        upkeepNeeded = pendingPayments.length > 0;
+        if (upkeepNeeded) {
+            PendingPayment memory firstPendingPayment = pendingPayments[0];
+            performData = abi.encode(
+                firstPendingPayment.user,
+                tokenAddress,
+                firstPendingPayment.amount
+            );
+        }
+    }
 
     function performUpkeep(bytes calldata performData) external override {}
 }

@@ -4,10 +4,10 @@ const {
 
 describe("eAAts", function () {
   let eaats, testToken, testAAFactory, testAA;
-  let deployer, addr1, addr2, addr3;
+  let deployer, addr1, addr2, addr3, consumer;
 
   before(async () => {
-    [deployer, addr1, addr2, addr3] = await ethers.getSigners();
+    [deployer, addr1, addr2, addr3, consumer] = await ethers.getSigners();
 
     const TestToken = await ethers.getContractFactory("TestToken");
     testToken = await TestToken.deploy();
@@ -19,7 +19,7 @@ describe("eAAts", function () {
 
     const eAAts = await ethers.getContractFactory("eAAts");
     const deliveryFee = ethers.utils.parseEther("3");
-    eaats = await eAAts.deploy(testToken.address, deliveryFee);
+    eaats = await eAAts.deploy(consumer.address, testToken.address, deliveryFee);
     await eaats.deployed();
   });
 
