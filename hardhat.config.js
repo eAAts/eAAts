@@ -1,25 +1,12 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
-require('dotenv').config();
+require("dotenv").config();
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.19",
   defaultNetwork: "hardhat",
-  networks: {
-    hardhat: {
-      forking: {
-        url: process.env.MUMBAI_ENDPOINT,
-      },
-    },
-    mumbai: {
-      url: process.env.MUMBAI_ENDPOINT,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-  },
-  etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
-  },
   solidity: {
     version: "0.8.9",
     settings: {
@@ -28,5 +15,19 @@ module.exports = {
         runs: 200,
       },
     },
+  },
+  networks: {
+    hardhat: {
+      forking: {
+        url: "https://polygon-mumbai.infura.io/v3/" + process.env.INFURA_KEY,
+      },
+    },
+    mumbai: {
+      url: "https://polygon-mumbai.infura.io/v3/" + process.env.INFURA_KEY,
+      accounts: [PRIVATE_KEY, ],
+    },
+  },
+  etherscan: {
+    // apiKey: process.env.POLYGONSCAN_API_KEY,
   },
 };
