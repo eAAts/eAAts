@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
+import "./interfaces/IAutomationCompatible.sol";
 import "./interfaces/IeAAts.sol";
 import "./interfaces/IFunctionsConsumer.sol";
-import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract eAAts is IeAAts, AutomationCompatible, Ownable {
+contract eAAts is IeAAts, IAutomationCompatible, Ownable {
     // State Variables
     IFunctionsConsumer public consumer;
     uint64 public subscriptionId;
@@ -222,17 +222,17 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
     }
 
     function performUpkeep(bytes calldata performData) external override {
-        (address user, address token, uint256 amount) = abi.decode(
+        (, address token, uint256 amount) = abi.decode(
             performData,
             (address, address, uint256)
         );
 
         string[] memory args = new string[](3);
-        args[0] = addressToString(user);
-        args[1] = addressToString(token);
-        args[2] = uint256ToString(amount);
+        args[0] = addressToString(token);
+        args[1] = uint256ToString(amount);
+        args[2] = uint256ToString(block.chainid);
 
-        bytes[] memory bytesArgs = new bytes[](3);
+        bytes[] memory bytesArgs = new bytes[](0);
 
         consumer.sendRequest(
             source,
@@ -242,7 +242,8 @@ contract eAAts is IeAAts, AutomationCompatible, Ownable {
             args,
             bytesArgs,
             subscriptionId,
-            300000
+            300000,
+            0x66756e2d706f6c79676f6e2d6d61696e6e65742d310000000000000000000000
         );
     }
 
