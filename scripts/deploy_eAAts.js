@@ -1,34 +1,24 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const {
+  ethers
+} = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
-  let eaats, testToken, testAAFactory, testAA;
-  let deployer, addr1, addr2, addr3;
+  let eaats;
 
-  const TestToken = await ethers.getContractFactory("TestToken");
-  testToken = await TestToken.deploy();
-  await testToken.deployed();
-
-  console.log("testToken address : ", testToken.address);
-
-  const TestAAFactory = await ethers.getContractFactory("TestAAFactory");
-  testAAFactory = await TestAAFactory.deploy();
-  await testAAFactory.deployed();
-
-  console.log("testAAFactory address : ", testAAFactory.address);
+  const feeData = await ethers.provider.getFeeData();
 
   const eAAts = await ethers.getContractFactory("eAAts");
-  const deliveryFee = ethers.utils.parseEther("3");
-  eaats = await eAAts.deploy(testAAFactory.address, testToken.address, deliveryFee);
+  const consumerAddress = "0xB34715F7229C77c8c8aA841cf728190D5eb11961";
+  const source = fs
+    .readFileSync(path.resolve(__dirname, "source.js"))
+    .toString();
+  const deliveryFee = "3"+"0".repeat(6);
+  eaats = await eAAts.deploy(consumerAddress, 25, source, "0x7cC1C9B374b95AeeDA136192A08bFb7aFfE66C48", deliveryFee);
   await eaats.deployed();
 
   console.log("eaats address : ", eaats.address);
-
 }
 
 // We recommend this pattern to be able to use async/await everywhere
