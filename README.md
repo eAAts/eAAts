@@ -2,9 +2,9 @@
 
 The `eAAts` is a smart contract that manages orders and payments for delivery services on the Ethereum blockchain. Here is the information of the deployed `eAAts` contract:
 
-| Blockchain        | eAAts Address                        |
+| Blockchain              | eAAts Address                                       |
 |-------------------|--------------------------------------|
-| Polygon Mainnet  | `0xb6DEa39915680d127238564F746ecBa690edd2c2` |
+| Polygon Mainnet        | `0xb6DEa39915680d127238564F746ecBa690edd2c2` |
 
 `eAAts` contract inherits Chainlink's Automation feature. If the payment network selected is not Polygon, `checkUpkeep` will return true. When `checkUpkeep` returns true, Chainlink nodes will execute `performUpkeep` and call `FunctionsConsumer`'s `sendRequest`. This will execute the web2 code passed as a parameter, making a payment from a wallet in another network to Polygon.
 
@@ -12,9 +12,9 @@ The `eAAts` is a smart contract that manages orders and payments for delivery se
 
 `FunctionsConsumer` is a smart contract that utilizes Chainlink's Functions feature to detect order completion events and process automatic payments on the Polygon blockchain.
 
-| Blockchain        | FunctionsConsumer Address               |
-|-------------------|--------------------------------------|
-| Polygon Mainnet  | `0xb6DEa39915680d127238564F746ecBa690edd2c2` |
+| Blockchain              | FunctionsConsumer Address               |
+|-------------------------|-----------------------------------------------------|
+| Polygon Mainnet        | `0xb6DEa39915680d127238564F746ecBa690edd2c2`                |
 
 ## Methods
 
