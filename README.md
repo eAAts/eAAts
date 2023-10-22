@@ -1,3 +1,51 @@
+# TEAM Repository
+https://github.com/eAAts
+- Tool : SAFE(AA SDK kit), Chainlink(Functions & Automation), Filecoin(IPFS- nftStorage & web3.stroage), PushProtocol, theGraph
+- Network : Polygon, Mantle, Scroll, Filecoin
+* each tools and network is colored differently in this chart
+```mermaid
+graph TD
+
+    A[eAAts Client]
+    B[socialLogin & payments - SAFE AA SDK]
+    C[Automated Payments with Cross Cahin Bridge - Chainlink automation & functions]
+    D[NFT Comments & Coupons => FileCoin]
+    E[Alarm/Notification => push protocol]
+    F[Getting On chain data => the graph]
+
+    subgraph eAAts Service
+      A --> B
+      B --> C
+      A --> D
+      A --> E
+      A --> F
+    end
+
+    subgraph BlockChain Networks
+      C1((Polygon))
+      C2((Mantle))
+      C3((Scroll))
+      C4((Filecoin))
+      C --> C1
+      C --> C2
+      C --> C3
+      C --> C4
+    end
+
+    style A fill:#0FB6C1
+    style B fill:#90EE90 
+    style C fill:#0198E6
+    style D fill:#10D8E6
+    style E fill:#FFB6C1
+    style F fill:#aFB6C1
+
+    style C1 fill:#9F98E6
+    style C2 fill:#FF6F64
+    style C3 fill:#FF2F64
+    style C4 fill:#10D8E6
+```
+
+
 # eAAts
 
 The `eAAts` is a smart contract that manages orders and payments for delivery services on the Ethereum blockchain. Here is the information of the deployed `eAAts` contract:
