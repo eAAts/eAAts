@@ -1,6 +1,5 @@
 # Project Overview page
-* for more information please visit our Overview Page
-overview page : https://github.com/eAAts
+* for more information please visit our Overview Page https://github.com/eAAts
 - Tool : SAFE(AA SDK kit), Chainlink(Functions & Automation), Filecoin(IPFS- nftStorage & web3.stroage), PushProtocol, theGraph
 - Network : Polygon, Mantle, Scroll, Filecoin
 ```mermaid
