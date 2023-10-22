@@ -19,6 +19,7 @@ interface IFunctionsConsumer {
         string[] calldata args,
         bytes[] calldata bytesArgs,
         uint64 subscriptionId,
-        uint32 gasLimit
+        uint32 gasLimit,
+        bytes32 jobId
     ) external;
 }
