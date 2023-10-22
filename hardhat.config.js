@@ -32,7 +32,6 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        // url: "https://polygon-mumbai.infura.io/v3/" + process.env.INFURA_KEY,
         url: "https://polygon-mainnet.infura.io/v3/" + process.env.INFURA_KEY,
       },
     },
@@ -41,7 +40,6 @@ module.exports = {
       accounts: [PRIVATE_KEY, ],
     },
     polygon: {
-      // url: "https://polygon-mainnet.infura.io/v3/" + process.env.INFURA_KEY,
       url: "https://polygon-rpc.com",
       accounts: [PRIVATE_KEY, ],
     },
